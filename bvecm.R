@@ -39,6 +39,100 @@ summary(johansen_test)
 
 #existe prueba cointegracion al menos 3 vectores de cointegracion
 
+# ==================================================
+# PRUEBAS DE RAÍZ UNITARIA (ADF y KPSS)
+# ==================================================
+
+# Asegurarnos de que estamos usando las variables en log-niveles
+# (Ajusta según tu data_final, pero asumo que ya tienes las columnas log)
+
+# Vector con los nombres de las variables (en el orden que desees)
+vars_ur <- c("itcer", "ipi_eeuu", "iti", "transable", "remesas")
+
+# Crear una lista para almacenar resultados
+resultados_adf <- data.frame(Variable = vars_ur, 
+                             ADF_niveles_p = NA, 
+                             ADF_diff_p = NA,
+                             KPSS_niveles_est = NA,
+                             KPSS_diff_est = NA)
+
+#test de estacionariedad
+
+#numero de rezagos para ADF 
+max_lag <- 4  
+
+for (i in seq_along(vars_ur)) {
+  var_name <- vars_ur[i]
+  serie <- data_cointegracion[[var_name]]  #datos en niveles (ln)
+  
+  adf_level <- ur.df(serie, type = "trend", lags = max_lag, selectlags = "BIC")
+  p_val_level <- tseries::adf.test(serie, k = max_lag)$p.value
+  resultados_adf$ADF_niveles_p[i] <- p_val_level
+  
+  #adf
+  serie_diff <- diff(serie)
+  p_val_diff <- tseries::adf.test(serie_diff, k = max_lag)$p.value
+  resultados_adf$ADF_diff_p[i] <- p_val_diff
+  
+  #kpss en niveles 
+  kpss_level <- ur.kpss(serie, type = "mu", lags = "short")  
+  # estadistico
+  resultados_adf$KPSS_niveles_est[i] <- kpss_level@teststat
+  #kpss en diferencias
+  kpss_diff <- ur.kpss(serie_diff, type = "mu", lags = "short")
+  resultados_adf$KPSS_diff_est[i] <- kpss_diff@teststat
+}
+
+#print
+print(resultados_adf)
+
+#fecha para serie historica
+data_nexo <- data %>%
+  mutate(
+    quarter_start = case_when(
+      mes == "I"   ~ "01-01",
+      mes == "II"  ~ "04-01",
+      mes == "III" ~ "07-01",
+      mes == "IV"  ~ "10-01"
+    ),
+    date = as.Date(paste(año, quarter_start, sep = "-"))
+  )
+
+#alias
+windowsFonts(TNR = windowsFont("Times New Roman"))
+
+#serie historica para nexo (revista)
+plot_historico_nexo <- function(df, variable, y_label) {
+  ggplot(df, aes(x = date, y = .data[[variable]])) +
+    geom_line(color = "black", linewidth = 0.7) +
+    
+    scale_x_date(date_breaks = "3 years", date_labels = "%Y") +
+    labs(x = NULL, y = y_label) +
+    
+    #Times New Roman 12pt
+    theme_classic(base_size = 12) + 
+    theme(
+      text = element_text(family = "TNR"), #alias
+      axis.line = element_line(color = "black"),
+      panel.grid = element_blank(),
+      plot.title = element_blank(),
+      plot.subtitle = element_blank()
+    )
+}
+
+#graficos
+p_remesas <- plot_historico_nexo(data_nexo, "remesas", "Remesas (Porcentaje del PIBT)")
+p_itcer   <- plot_historico_nexo(data_nexo, "itcer", "ITCER (Índice)")
+#export remesas
+tiff("Figura1_Historico_Remesas.tif", units="in", width=6.5, height=4, res=300, compression="lzw")
+print(p_remesas)
+dev.off()
+
+#export itcer
+tiff("Figura2_Historico_ITCER.tif", units="in", width=6.5, height=4, res=300, compression="lzw")
+print(p_itcer)
+dev.off()
+
 #datos en log-niveles
 data_niveles <- data %>%
   dplyr::select(itcer, ipi_eeuu, iti, transable, remesas) %>%
@@ -184,6 +278,77 @@ combined_plot_2 <- (p4 | p5 | p6) +
 print(combined_plot_1)
 print(combined_plot_2)
 
+#grafico anterior para nexo
+
+#fuente
+windowsFonts(TNR = windowsFont("Times New Roman"))
+
+plot_nexo_con_dummys <- function(data, var_name, y_label) {
+  
+  serie_data <- data[[var_name]]
+  y_min <- min(serie_data, na.rm = TRUE)
+  y_max <- max(serie_data, na.rm = TRUE)
+  
+  ggplot(data, aes(x = date, y = .data[[var_name]])) +
+    
+    #serie negra
+    geom_line(color = "black", linewidth = 0.8) +
+    
+    #dummys anatacion
+    geom_vline(xintercept = min(data$date[data$dummy_2008 == 1], na.rm = TRUE), 
+               color = "gray40", alpha = 0.8, linewidth = 0.8, linetype = "dashed") +
+    geom_vline(xintercept = min(data$date[data$dummy_2018 == 1], na.rm = TRUE), 
+               color = "gray40", alpha = 0.8, linewidth = 0.8, linetype = "dashed") +
+    geom_vline(xintercept = min(data$date[data$dummy_2020 == 1], na.rm = TRUE), 
+               color = "gray40", alpha = 0.8, linewidth = 0.8, linetype = "dashed") +
+    
+    #dummys
+    annotate("text", x = min(data$date[data$dummy_2008 == 1], na.rm = TRUE), 
+             y = y_min + 0.05*(y_max - y_min),
+             label = "Crisis Financiera", color = "black",
+             angle = 90, vjust = -0.6, size = 3.5, family = "TNR") +
+    annotate("text", x = min(data$date[data$dummy_2018 == 1], na.rm = TRUE), 
+             y = y_min + 0.05*(y_max - y_min),
+             label = "Crisis Política", color = "black",
+             angle = 90, vjust = -0.6, size = 3.5, family = "TNR") +
+    annotate("text", x = min(data$date[data$dummy_2020 == 1], na.rm = TRUE), 
+             y = y_min + 0.05*(y_max - y_min),
+             label = "COVID-19", color = "black",
+             angle = 90, vjust = -0.6, size = 3.5, family = "TNR") +
+    
+    scale_x_date(date_breaks = "2 years", date_labels = "%Y", expand = expansion(mult = 0.03)) +
+    
+    labs(x = NULL, y = y_label) +
+    
+    #formato nexo
+    theme_classic(base_size = 12) + 
+    theme(
+      text = element_text(family = "TNR"),
+      axis.line = element_line(color = "black"),
+      panel.grid = element_blank(),          #no fondo
+      plot.title = element_blank(),          #no titulo
+      plot.subtitle = element_blank(),       #sin subtitulo
+      axis.text = element_text(color = "black")
+    )
+}
+
+#graficos
+p_itcer_nexo <- plot_nexo_con_dummys(data_final, "itcer", "ITCER (Logaritmo natural)")
+p_remesas_nexo <- plot_nexo_con_dummys(data_final, "remesas", "Remesas (Logaritmo natural)")
+p_transable_nexo <- plot_nexo_con_dummys(data_final, "transable", "Sector Transable (Logaritmo natural)")
+
+#export de graficos
+tiff("Figura3_ITCER_logniveles.tif", units="in", width=6.5, height=4, res=300, compression="lzw")
+print(p_itcer_nexo)
+dev.off()
+
+tiff("Figura4_Remesas_logniveles.tif", units="in", width=6.5, height=4, res=300, compression="lzw")
+print(p_remesas_nexo)
+dev.off()
+
+tiff("Figura5_Transable_logniveles.tif", units="in", width=6.5, height=4, res=300, compression="lzw")
+print(p_transable_nexo)
+dev.off()
 
 # orden de lags
 endogenas <- data_final[, c(
@@ -200,7 +365,7 @@ exogenas <- data_final[, c("dummy_2018", "dummy_2020", "dummy_2008")]
 lag_selection <- vars::VARselect( 
   y = endogenas,
   exogen = exogenas,
-  lag.max = 7,
+  lag.max = 10,
   type = "const"
 )
 
@@ -214,8 +379,8 @@ print(lag_selection$criteria)
 
 endogenas <- as.matrix(data_final[, c(
   "ipi_eeuu",
-  "remesas",
   "iti",
+  "remesas",
   "itcer",  
   "transable"
 )])
@@ -227,10 +392,10 @@ exogenas <- as.matrix(data_final[, c(
 #Modelo BVECM
 
 #orden cholesky
-variables_johansen <- c("ipi_eeuu",  
-                        "iti",       
-                        "remesas",   
-                        "itcer",     
+variables_johansen <- c("ipi_eeuu",
+                        "iti",
+                        "remesas",
+                        "itcer", 
                         "transable")
 endogenas_check <- as.matrix(data_final[, variables_johansen])
 
@@ -251,6 +416,7 @@ dy <- diff(endogenas_check)
 exog_vecm <- cbind(diff(exogenas), ect_lagged)
 
 #estimación con bsvars (p=1 en diferencias equivale a p=2 en niveles)
+
 especificacion <- bsvars::specify_bsvar$new(
   data = dy, 
   p    = 6, 
@@ -258,13 +424,25 @@ especificacion <- bsvars::specify_bsvar$new(
 )
 
 set.seed(123)
-posterior_vecm <- bsvars::estimate(especificacion, S = 80000)
+posterior_vecm <- bsvars::estimate(especificacion, S = 100000)
 
-cat('Se determinó un orden de rezago $p=7$ para el sistema en niveles 
-    mediante el criterio de AIC. En consecuencia, el modelo BVECM se 
-    estimó utilizando $p-1=6$ rezagos en diferencias, permitiendo
-    capturar la dinámica de corto plazo sin perder la estructura de 
-    la relación de largo plazo')
+cat('Se determinó un orden de rezago p=7. En consecuencia, el modelo BVECM se 
+    estimó utilizando p-1=6 rezagos en diferencias')
+
+# ess
+
+#aplanar los draws de los coeficientes estructurales (B)
+#dimensiones de b [n_vars, n_vars, n_draws]
+draws_b <- posterior_vecm$posterior$B
+draws_b_flat <- t(apply(draws_b, 3, c)) 
+
+mcmc_b <- coda::as.mcmc(draws_b_flat)
+
+#calcular el ESS para cada parametro de B
+ess_resultados <- coda::effectiveSize(mcmc_b)
+
+#ess promedio
+cat("ESS promedio del modelo:", mean(ess_resultados), "\n")
 
 #velocidad de ajuste alfa
 summary(posterior_vecm)
@@ -316,8 +494,8 @@ plot_irf <- function(df) {
                              label = paste0(periodo, "T: ", round(mediana, 4))),
               color = "#E74C3C", fontface = "bold", size = 3.5,
               vjust = ifelse(pt$mediana > 0, -0.5, 1.2)) +
-    labs(x = "Trimestre después del shock", y = "Respuesta (Mediana)", 
-         caption = "Intervalo de credibilidad al 95% (Bayesiano)") +
+    labs(x = "Trimestre después del shock\nIntervalo de credibilidad al 95% (Bayesiano)", y = "Respuesta (Mediana)", 
+         caption = "Fuente: BCN, SECMCA & FRED | Elaboración propia") +
     scale_x_continuous(breaks = seq(0, max(df$periodo), by = 2)) +
     theme_minimal(base_size = 14) +
     theme(plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
@@ -331,51 +509,149 @@ resumen <- summary(posterior_vecm)
 a_global <- resumen$hyper$A["A_global_scale", "mean"]
 b_global <- resumen$hyper$B["B_global_scale", "mean"]
 
-cat("\n=== RIGOR METODOLÓGICO: HIPERPARÁMETROS ESTIMADOS ===\n")
+cat("\n=== hiperparametros ===\n")
 cat("- Shrinkage Global A (Lags):    ", round(a_global, 6), "\n")
 cat("- Shrinkage Global B (Estructural):", round(b_global, 6), "\n")
 
+#irf
+
 #generar los impulsos 
-irfs_raw <- bsvars::compute_impulse_responses(posterior_vecm, horizon = 20)
+irfs_raw <- bsvars::compute_impulse_responses(posterior_vecm, horizon = 12)
 
 #Shock remesas (3) -> respuestas: itcer (4) y transable (5)
 irf_itcer     <- irfs_raw[4, 3, , ] 
 irf_transable <- irfs_raw[5, 3, , ]
+irf_itcer_trasable <- irfs_raw[5,4, , ]
 
 preparar_df <- function(matriz, var_name, impulso_name) {
   data.frame(
     periodo   = 0:(dim(matriz)[1] - 1),
     mediana   = apply(matriz, 1, median),
-    inferior  = apply(matriz, 1, quantile, probs = 0.05),
-    superior  = apply(matriz, 1, quantile, probs = 0.95),
+    inferior  = apply(matriz, 1, quantile, probs = 0.025),
+    superior  = apply(matriz, 1, quantile, probs = 0.975),
     impulso   = impulso_name,
     respuesta = var_name
   )
 }
 
-df_itcer     <- preparar_df(irf_itcer, "itcer", "remesas")
+df_itcer <- preparar_df(irf_itcer, "itcer", "remesas")
 df_transable <- preparar_df(irf_transable, "transable", "remesas")
+df_itcer_transable <- preparar_df(irf_itcer_trasable, "transable", "itcer")
 
 #grafico
 p_itcer <- plot_irf(df_itcer) + 
-  labs(title = "Evidencia EH: Apreciación del Tipo de Cambio Real",
+  labs(title = "Apreciación del Tipo de Cambio Real",
        subtitle = "Shock de Remesas -> Respuesta ITCER (BVECM)")
 
 p_transable <- plot_irf(df_transable) + 
-  labs(title = "Evidencia EH: Impacto en el Sector Transable",
+  labs(title = "Impacto en el Sector Transable",
        subtitle = "Shock de Remesas -> Respuesta Producción Transable")
+
+p_itcer_transable <- plot_irf(df_itcer_transable) + 
+  labs(title = "Impacto en el Sector Transable",
+       subtitle = "Shock del ITCER -> Respuesta Producción Transable")
 
 print(p_itcer)
 print(p_transable)
+print(p_itcer_transable)
+
+#irf nexo
+
+windowsFonts(TNR = windowsFont("Times New Roman"))
+
+plot_irf_nexo <- function(df, y_label) {
+  
+  pt <- df[which.max(abs(df$mediana)), ]
+  
+  ggplot(df, aes(x = periodo)) +
+    geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.6) +
+    geom_ribbon(aes(ymin = inferior, ymax = superior), fill = "grey80", alpha = 0.5) +
+    geom_line(aes(y = inferior), color = "black", linetype = "dashed", linewidth = 0.4) +
+    geom_line(aes(y = superior), color = "black", linetype = "dashed", linewidth = 0.4) +
+    geom_line(aes(y = mediana), color = "black", linewidth = 1) +
+    geom_point(data = pt, aes(y = mediana), color = "black", size = 2) +
+    geom_text(data = pt, aes(x = periodo, y = mediana, 
+                             label = paste0(periodo, "T: ", round(mediana, 4))),
+              color = "black", fontface = "bold", size = 3.5, family = "TNR",
+              vjust = ifelse(pt$mediana > 0, -1.2, 2.0)) + 
+    labs(x = "Trimestres después del shock", y = y_label) +
+    scale_x_continuous(breaks = seq(0, 20, by = 5), expand = c(0, 0.5)) +
+    theme_classic(base_size = 12) +
+    theme(
+      text = element_text(family = "TNR", color = "black"), 
+      axis.line = element_line(color = "black"),
+      axis.text = element_text(color = "black"),
+      panel.grid = element_blank(),
+      plot.title = element_blank(),    
+      plot.subtitle = element_blank(), 
+      plot.caption = element_blank(),
+      plot.margin = margin(t = 10, r = 15, b = 10, l = 10)
+    )
+}
+
+p_itcer_nexo <- plot_irf_nexo(df_itcer, "Respuesta del ITCER")
+p_transable_nexo <- plot_irf_nexo(df_transable, "Respuesta del S. Transable")
+p_itcer_transable_nexo <- plot_irf_nexo(df_itcer_transable, "Respuesta del S. Transable")
+
+#exportar
+
+tiff("Figura8a_IRF_Remesas_ITCER.tif", units="in", width=6.5, height=4, res=300, compression="lzw")
+print(p_itcer_nexo)
+dev.off()
+
+tiff("Figura8b_IRF_Remesas_Transable.tif", units="in", width=6.5, height=4, res=300, compression="lzw")
+print(p_transable_nexo)
+dev.off()
+
+tiff("Figura8c_IRF_ITCER_Transable.tif", units="in", width=6.5, height=4, res=300, compression="lzw")
+print(p_itcer_transable_nexo)
+dev.off()
+
+#tablas irfs
+
+#horizontes
+horizontes_clave <- c(0, 1,2,3,4,5,6,7, 8,9,10,11, 12)
+
+#intervalo de confianza
+formatear_tabla_irf <- function(df, h_vec) {
+  df_filtrado <- df[df$periodo %in% h_vec, ]
+  
+  tabla <- data.frame(
+    Trimestre = df_filtrado$periodo,
+    Impacto   = paste0(round(df_filtrado$mediana, 4), 
+                       " [", round(df_filtrado$inferior, 4), 
+                       ", ", round(df_filtrado$superior, 4), "]")
+  )
+  return(tabla)
+}
+
+#tablas
+tabla_irf_itcer <- formatear_tabla_irf(df_itcer, horizontes_clave)
+tabla_irf_transable <- formatear_tabla_irf(df_transable, horizontes_clave)
+tabla_irf_itcer_transable <- formatear_tabla_irf(df_itcer_transable, horizontes_clave)
+
+#prints
+cat("\n=== tabla irf: shock remesa -> respuesta itcer ===\n")
+print(tabla_irf_itcer)
+
+cat("\n=== tabla irf: shock remesa -> respuesta transable ===\n")
+print(tabla_irf_transable)
+
+cat("\n=== tabla irf: shock itcer -> respuesta transable ===\n")
+print(tabla_irf_itcer_transable)
 
 #residuos
 
 #bsvars devuelve valores ajistados. 
 #ll residuo es: aatos - ajustados
 fitted_draws <- bsvars::compute_fitted_values(posterior_vecm)
+
+fitted_median <- apply(fitted_draws, c(1, 2), median)
 #obtener la mediana de los residuos para las pruebas clásicas
 #dy es la matriz de datos en diferencias usada en el modelo
-residuos_mediana <- t(dy[7:nrow(dy),]) - apply(fitted_draws, c(1, 2), median)
+p_diff <- 6 
+datos_efectivos <- t(dy[(p_diff + 1):nrow(dy), ])
+residuos_mediana <- datos_efectivos - fitted_median
 residuos_mediana <- t(residuos_mediana)
 colnames(residuos_mediana) <- colnames(dy)
 
@@ -394,10 +670,10 @@ for(i in 1:ncol(residuos_mediana)) {
   diag_results$Jarque_Bera_p[i] <- tseries::jarque.bera.test(res)$p.value
   
   # ljung-box (autocorrelacion - lag 4)
-  diag_results$Ljung_Box_p[i] <- Box.test(res, lag = 4, type = "Ljung-Box")$p.value
+  diag_results$Ljung_Box_p[i] <- Box.test(res, lag = 12, type = "Ljung-Box")$p.value
   
-  # ARCH-LM (heterocedasticidad - lag 2)
-  diag_results$ARCH_LM_p[i] <- FinTS::ArchTest(res, lags = 2)$p.value
+  # ARCH-LM (heterocedasticidad - lag 4)
+  diag_results$ARCH_LM_p[i] <- FinTS::ArchTest(res, lags = 4)$p.value
 }
 
 cat("\n=== Residuos p-vlue ===\n")
@@ -511,6 +787,37 @@ diag_plot_final <- diag_plot_coef &
 
 #grafico centrado
 print(diag_plot_final)
+
+#formato nexo
+
+windowsFonts(TNR = windowsFont("Times New Roman"))
+
+#grafico de raices 
+grafico_raices_bvecm <- ggplot(df_roots, aes(x = Re, y = Im)) +
+  ggforce::geom_circle(aes(x0 = 0, y0 = 0, r = 1), 
+                       color = "black", linetype = "dashed", linewidth = 0.8) +
+  geom_vline(xintercept = 0, color = "black", linewidth = 0.5) +
+  geom_hline(yintercept = 0, color = "black", linewidth = 0.5) +
+  geom_point(size = 4, color = "black", fill = "grey40", shape = 21, alpha = 0.8) +
+  coord_equal(xlim = c(-1.1, 1.1), ylim = c(-1.1, 1.1)) +
+  labs(
+    x = "Parte Real", 
+    y = "Parte Imaginaria"
+  ) +
+  #tipografia Times New Roman 
+  theme_bw(base_size = 12, base_family = "TNR") + 
+  theme(
+    panel.grid.major = element_line(color = "grey90"),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    legend.position = "none",
+    plot.margin = margin(t = 5, r = 15, b = 5, l = 5, unit = "pt")
+  )
+
+#print grafico limpio
+tiff("raices_bvecm.tif", units="in", width=5, height=5, res=300, compression="lzw")
+print(grafico_raices_bvecm)
+dev.off()
 
 #resumen de trazas cmcm, distribucion y acf
 
