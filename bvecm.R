@@ -966,3 +966,12 @@ print(tabla_final)
 
 cat('Nota: Debido a que se reportan las medianas de la distribución posterior para cada componente, la suma de las contribuciones puede diferir ligeramente del 100%')
 
+#en la linea 151 y 163 esta data_final de ahi extraigo los resultados
+#desviacion 
+sd_historica <- sd(diff(data_final$transable), na.rm = TRUE) * 100
+cat("La SD histórica es:", round(sd_historica, 2), "%\n")
+
+porcentaje_impacto <- (1.14 / sd_historica) * 100
+cat("El choque representa el:", round(porcentaje_impacto, 2), "%\n")
+
+cat('esto es para el reporte del irf, leer paper')
