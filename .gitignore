@@ -1,0 +1,9 @@
+#rstudio
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+#quarto
+Enfermedad_holandesa_emer.aux
+Enfermedad_holandesa_emer.log
