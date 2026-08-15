@@ -1,0 +1,325 @@
+---
+title: "Remesas, Índice de Tipo de Cambio Real y Competitividad"
+subtitle: "Un enfoque BVECM para Nicaragua (2006--2023)"
+author: "Emerson Lopez"
+institute: "Universidad Nacional de Ingeniería (UNI)"
+date: "2026-08-13"
+date-format: "DD [de] MMMM [de] YYYY"
+lang: es
+format: 
+  beamer:
+    pdf-engine: lualatex
+    theme: Madrid
+    aspectratio: 169
+    fontsize: 10pt
+    keep-tex: true
+    navigation: horizontal
+    include-in-header:
+      text: |
+        % Color rojo vino / Burgundy
+        \definecolor{RojoVino}{HTML}{722F37}
+        \definecolor{burgundy}{RGB}{128, 0, 32}
+        \definecolor{darkwine}{RGB}{90, 0, 20}
+        \definecolor{softwine}{RGB}{250, 240, 242}
+        \definecolor{charcoal}{RGB}{40, 40, 40}
+        
+        % Configuración de colores Beamer
+        \setbeamercolor{structure}{fg=RojoVino}
+        \setbeamercolor{palette primary}{bg=RojoVino,fg=white}
+        \setbeamercolor{palette secondary}{bg=RojoVino!85!black,fg=white}
+        \setbeamercolor{palette tertiary}{bg=RojoVino!70!black,fg=white}
+        
+        % Pie de página
+        \setbeamercolor{author in head/foot}{bg=RojoVino, fg=white}
+        \setbeamercolor{title in head/foot}{bg=RojoVino!90!black, fg=white}
+        \setbeamercolor{date in head/foot}{bg=RojoVino!80!black, fg=white}
+        
+        % Estilo de bloques
+        \setbeamercolor{block title}{bg=RojoVino,fg=white}
+        \setbeamercolor{block body}{bg=softwine,fg=black}
+        
+        % Logo dinámico (diapositivas > 1)
+        \logo{%
+          \ifnum\insertframenumber>1%
+            \includegraphics[height=0.8cm]{bonita.png}%
+          \fi%
+        }
+        
+        % Logo grande en la portada
+        \titlegraphic{\includegraphics[height=2.5cm]{bonita.png}}
+        
+        % Opciones estéticas generales
+        \setbeamertemplate{blocks}[rounded][shadow=false]
+        \setbeamertemplate{navigation symbols}{}
+        \setbeamertemplate{caption}[numbered]
+        \setbeamerfont{caption name}{series=\bfseries}
+---
+
+## Comienzo y Retos
+
+- **Origen:** Practica econometría con datos reales.
+- **Intentos:** Regresiones OLS normales cruzando el PIB, las remesas y otras variables.
+- **Fenómeno:** El auge de las remesas en 2024 era exponencial.
+- **Investigación:** Enfermedad Holandesa.
+
+::: block
+### Programación
+
+RStudio, documentación de las librerías, funciones y vídeos tutoriales.
+:::
+
+\vspace{0.3cm}
+
+::: block
+### Metodológica
+
+Los modelo OLS era demasiado básico para capturar la dinámica real de estas variables.
+:::
+
+## Datos
+
+La limpieza y transformación de datos:
+
+- **El problema del tamaño muestral bajo:**
+  - *Anual (2006--2023):* Solo 17 observaciones.
+  - *Trimestral:* Eran más observaciones, pero seguían siendo bajas.
+  - *Mensual:* Imposible. Transformacion a **% del PIB**, limita a frecuencia trimestral.
+- **Selección de variables:** Decidir qué variables serían útiles, cuáles descartar y cómo transformarlas.
+- **Heterocedasticidad:** La varianza en los errores no constante.
+
+## Del VAR Clásico a la Solución Bayesiana
+
+- **El intento con el VAR Clásico:** Inicialmente se uso un modelo Vector Autorregresivo (VAR) normal.
+- **Diagnóstico:** Por los problemas de la muestra y la varianza, los resultados presentaron:
+  - La heterocedasticidad era bastante significativa.
+  - Había fuerte autocorrelación.
+  - La normalidad de los residuos no era significativa.
+- **La solución:** Integración Bayesiana (BVAR).
+
+## El Proceso de Revisión por Pares (Peer Review)
+
+### Revisor 1
+
+::: block
+- **Literatura:**
+  - Agregar 3 referencias bibliográficas más recientes.
+  - Incluir literatura empírica institucional del **Fondo Monetario Internacional (FMI)**.
+:::
+
+### Revisor 2
+
+::: block
+- **Contradicción ADF vs. KPSS:** El revisor asumió que todas las variables estacionarias en $I(1)$ eran por conveniencia dado que los Test de Dickey-Fuller Aumentado (ADF) y el Test KPSS se contradecían.
+:::
+
+::: block
+- **El modelo original:** Un modelo BVAR con 1 diferencia para forzar el supuesto de estacionariedad.
+- **Bloque Cointegrado:** El revisor pidió que se agregara la cointegración y de estarlo hacer un modelo BVECM
+:::
+
+## Revisor 2
+
+- **Analogía Bootstrap vs. Bayesiano**
+  - En el borrador inicial, se intento explicar el método Bayesiano haciendo una analogía con el método Bootstrap.
+- **Conceptos:**
+  - **Bootstrap:** Es un remuestreo empírico frecuentista que asume que la muestra representa a la población.
+  - **Bayesiano:** Trata a los parámetros como variables aleatorias y actualiza una creencia *a priori* con la verosimilitud de los datos.
+
+## Introducción y Contexto
+
+- **Auge:** Las remesas familiares en Nicaragua pasaron de representar el **3.5% del PIBT en 2006** a superar el **9% en 2022**.
+- **Efecto Macroeconómico:** La literatura de la *Enfermedad Holandesa* (Corden & Neary, 1982) predice que este flujo masivo de divisas puede causar:
+  - **Efecto Gasto:** Apreciación del Tipo de Cambio Real (ITCER).
+  - **Efecto Movimiento de Recursos:** Desindustrialización y pérdida de competitividad del sector transable.
+- **Objetivo del Estudio:** Evaluar empíricamente si este síndrome macroeconómico se ha materializado en Nicaragua durante el periodo 2006--2023.
+
+## Hipótesis
+
+::: block
+### Hipótesis 1: Efecto Gasto Mitigado
+
+Dado el régimen de *crawling peg* (deslizamiento cambiario) y la alta propensión marginal a importar de la economía nicaragüense, un choque positivo exógeno de remesas **no generará una apreciación estadísticamente significativa del ITCER**.
+:::
+
+\vspace{0.3cm}
+
+::: block
+### Hipótesis 2: Efecto Liquidez
+
+En un contexto de mercados financieros poco profundos, las remesas actúan como un **sustituto del crédito formal**, aliviando restricciones de liquidez y generando un **efecto expansivo de corto plazo sobre el sector transable**, contrarrestando la predicción clásica de desindustrialización.
+:::
+
+## Datos y Metodología
+
+- **Frecuencia y Cobertura:** Datos trimestrales para la economía nicaragüense (2006--2023).
+- **Variables Endógenas del Sistema (**$I(1)$):
+  1.  Flujo de Remesas
+  2.  Índice de Términos de Intercambio (ITI)
+  3.  Índice de Tipo de Cambio Efectivo Real (ITCER)
+  4.  Índice de Producción Industrial de EE. UU. (IPI EE. UU.)
+  5.  Actividad del Sector Transable (ST)
+- **Variables Dummy Exógenas (Identificación Narrativa):**
+  - Crisis Financiera Global (2008--2009)
+  - Crisis Sociopolítica Local (2018)
+  - Pandemia de COVID-19 (2020--2021)
+
+## Cointegración de Johansen y Estructura Dinámica
+
+- **Test de Johansen:** El procedimiento de la Traza confirma fuertemente la existencia de **3 vectores de cointegración (**$r=3$) al 1% de significancia, garantizando relaciones de equilibrio de largo plazo duraderas.
+- **Orden de Retardos:** Basado en el Principio de Parsimonia y diagnósticos de residuos, se seleccionaron **6 rezagos en diferencias** (7 en niveles) para evitar sobreparametrización.
+
+::: {#tbl-johansen}
+| Hipótesis Nula | Estadístico |  10%  |  5%   |  1%   |
+|:--------------:|:-----------:|:-----:|:-----:|:-----:|
+|   $r \leq 4$   |    2.74     | 7.52  | 9.24  | 12.97 |
+|   $r \leq 3$   |    14.52    | 17.85 | 19.96 | 24.60 |
+|   $r \leq 2$   |    41.29    | 32.00 | 34.91 | 41.07 |
+|   $r \leq 1$   |    83.52    | 49.65 | 53.12 | 60.16 |
+|    $r = 0$     |   136.94    | 71.86 | 76.07 | 84.45 |
+
+Resumen del test de cointegración (Johansen)
+:::
+
+## El Modelo BVECM Estructural
+
+Se estima un **Modelo de Vector de Corrección de Errores Bayesiano (BVECM)**:
+
+$$\Delta Y_t = \underbrace{\alpha \beta' Y_{t-1}}_{\text{Largo Plazo}} + \underbrace{\sum_{i=1}^{p-1} \Gamma_i \Delta Y_{t-i}}_{\text{Corto Plazo}} + \underbrace{C D_t + u_t}_{\text{Choques exógenos}}$$
+
+Donde:
+- **$\beta'$**: **Relaciones de equilibrio** (los vectores de cointegración).
+- **$\alpha$**: **Velocidad de ajuste** (qué tan rápido el sistema corrige las desviaciones del equilibrio de ayer).
+- **$\Gamma_i$**: **Efectos dinámicos de corto plazo**, donde el subíndice **$i$** representa cada uno de los rezagos (trimestres pasados).
+
+\vspace{0.2cm}
+
+::: {.block}
+### Estimación Bayesiana del Modelo
+
+- **Priors Jerárquicos:** Se introdujo información *a priori* para encoger (*shrinkage*) los coeficientes menos relevantes hacia cero.
+- **Simulación MCMC:** Se realizaron **100,000 iteraciones** computacionales para encontrar la distribución probabilística más robusta de los coeficientes, superando el problema de la muestra pequeña.
+:::
+
+## Estrategia de Identificación Estructural
+
+Para aislar los choques ortogonales y calcular las Funciones de Impulso-Respuesta (IRF), se evalúan dos estructuras para la matriz contemporánea $A_0$:
+
+\vspace{0.3cm}
+
+::: block
+### 1. Ordenamiento de Primer Orden (Teórico)
+
+$$\text{IPI EEUU} \rightarrow \text{ITI} \rightarrow \mathbf{Remesas} \rightarrow \mathbf{ITCER} \rightarrow \text{Sector Transable}$$
+
+*Fundamento:* Las remesas responden a determinantes microeconómicos del migrante en el muy corto plazo y son inelásticas a fluctuaciones inmediatas del tipo de cambio real bajo *crawling peg* (Acosta, 2009).
+:::
+
+::: block
+### 2. Ordenamiento de Segundo Orden (Sensibilidad)
+
+$$\text{IPI EEUU} \rightarrow \text{ITI} \rightarrow \mathbf{ITCER} \rightarrow \mathbf{Remesas} \rightarrow \text{Sector Transable}$$
+
+Relaja el supuesto anterior, permitiendo una reacción contemporánea de las remesas ante el ITCER.
+:::
+
+## Impulso-Respuesta: Primer Orden (Evaluación Teórica)
+
+::::: columns
+::: {.column width="50%"}
+\centering
+
+\scriptsize IRF: Respuesta del ITCER ante un choque de Remesas
+
+\vspace{0.1cm}
+
+\includegraphics[width=0.8\linewidth]{../graficos/Impulso-Respuesta de la variable ITCER ante un choque estructural de Remesas (primer orden).pdf}
+
+\vspace{-0.2cm}
+
+{\tiny Ausencia de Apreciación (Efecto Gasto nulo)}
+:::
+
+::: {.column width="50%"}
+\centering
+
+\scriptsize IRF: Respuesta del Sector Transable ante Remesas
+
+\vspace{0.1cm}
+
+\includegraphics[width=0.8\linewidth]{../graficos/Impulso-Respuesta de la variable ST ante un choque de las Remesas (primer orden).pdf}
+
+\vspace{-0.2cm}
+
+{\tiny Expansión del ST (Efecto Liquidez)}
+:::
+:::::
+
+\vspace{0.1cm}
+
+- **Neutralidad Cambiaria:** El choque de remesas no altera los precios relativos. El intervalo bayesiano al 95% contiene el cero a lo largo de los 12 trimestres.
+- **Sustituto de Crédito:** Respuesta expansiva transitoria y estadísticamente significativa en el Sector Transable (mediana de 1.14% en t=1).
+
+## Impulso-Respuesta: Segundo Orden (Análisis de Sensibilidad)
+
+::::: columns
+::: {.column width="50%"}
+\centering
+
+\scriptsize IRF: Respuesta del ITCER ante un choque de Remesas
+
+\vspace{0.1cm}
+
+\includegraphics[width=0.8\linewidth]{../graficos/Impulso-Respuesta de la variable ITCER ante un choque de las Remesas (segundo orden).pdf}
+
+\vspace{-0.2cm}
+
+{\tiny Invarianza del ITCER ante Remesas}
+:::
+
+::: {.column width="50%"}
+\centering
+
+\scriptsize IRF: Respuesta del Sector Transable ante el ITCER
+
+\vspace{0.1cm}
+
+\includegraphics[width=0.8\linewidth]{../graficos/Impulso-Respuesta de la variable ST ante un choque del ITCER (segundo orden).pdf}
+
+\vspace{-0.2cm}
+
+{\tiny Sensibilidad del ST ante el ITCER}
+:::
+:::::
+
+\vspace{0.1cm}
+
+- **Robustez del Rechazo:** Al otorgar precedencia contemporánea al ITCER, el impacto de las remesas sobre el tipo de cambio sigue siendo nulo.
+- **Cadena Causal Rota:** Aunque el Sector Transable responde positivamente a ganancias cambiarias, las remesas son incapaces de provocar dicha alteración.
+
+## Mecanismos de Transmisión Institucional
+
+::: block
+### ¿Por qué no se materializa la Enfermedad Holandesa?
+
+La patología macroeconómica se encuentra desactivada desde su origen debido a las restricciones institucionales y estructurales de la economía nicaragüense:
+:::
+
+\vspace{0.3cm}
+
+1.  **Válvula de Importaciones:** La altísima propensión marginal a importar drena rápidamente el exceso de divisas hacia el exterior, evitando que la liquidez presione los precios de los bienes no transables locales.
+2.  **Régimen Cambiario Administrado:** El *crawling peg* actúa como ancla, esterilizando las presiones de apreciación nominal que exige el modelo clásico de Corden y Neary.
+
+## Discusión y Robustez
+
+::: block
+### 
+- **Superación del enfoque BVAR tradicional:** El BVAR en diferencias omitía las relaciones de baja frecuencia y presentaba heterocedasticidad. El **BVECM** modela correctamente la cointegración y absorbe quiebres estructurales.
+- **Agenda Futura:** Explorar efectos asimétricos o no lineales mediante modelos de umbral (*Threshold VAR*) debido a la escala histórica actual de los flujos.
+:::
+
+## Conclusiones
+
+- **Diagnóstico Final:** La hipótesis de la **Enfermedad Holandesa no se materializa** en la economía nicaragüense durante el periodo 2006--2023.
+- **Ausencia de Efecto Gasto:** El ITCER permanece inalterado debido a válvulas de escape estructurales (importaciones y régimen cambiario).
+- **Presencia de Efecto Liquidez:** Las remesas funcionan como un estabilizador macroeconómico y catalizador productivo de corto plazo que mitiga las restricciones financieras del sector transable.
+- **Transparencia y Replicabilidad:** El código de estimación y los datos están disponibles públicamente.
