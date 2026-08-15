@@ -80,7 +80,7 @@ Gracias por leer, gracias Bonita, gracias Kuin, los quiero \<3
 
 <table align="center">
   <tr>
-    <td align="center" valign="middle"><img src="images/clipboard-674890819.png" width="84"/></td>
+    <td align="center" valign="middle"><img src="paper_slices/icon_kuin.png" width="84"/></td>
     <td align="center" valign="middle" style="padding: 0 90px;"><img src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/2764.png" width="50"/></td>
     <td align="center" valign="middle"><img src="paper_slices/bonita.png" width="165"/></td>
   </tr>
